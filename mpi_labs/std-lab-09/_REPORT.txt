@@ -1,0 +1,27 @@
+Hello World from 1/3 
+Hello World from 2/3 
+Hello World from 0/3 
+
+
+----------------------------
+
+ nproc 
+ rez: 16
+
+long num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+rez: 16
+
+----------------------------
+
+Hello World from 0/3 
+Hello World from 1/3 
+Hello World from 2/3 
+
+----------------------------
+
+- ele ruleaza doar aparent simultan dar defapt sunt executate dupa cum au fost planificate de planificator.
+- "oversubscribe" la compilare este necesar ca argument.
+
+----------------------------
+
+
