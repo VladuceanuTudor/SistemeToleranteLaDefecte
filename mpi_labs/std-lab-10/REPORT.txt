@@ -1,0 +1,112 @@
+----1--------------------------------------------
+
+Hello from 1/4 
+Hello from 2/4 
+Hello from 0/4 
+A special hello message from the FIRST process
+Hello from 3/4 
+A special hello message from the LAST process
+
+----2--------------------------------------------
+
+Received array: 1 2 3 4 5 
+int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm)
+
+----3--------------------------------------------
+
+Received array: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 
+int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm)
+
+----4--------------------------------------------
+
+Hello from 0/4 
+Hello from 1/4 
+Hello from 3/4 
+Received value: 7
+Received value: 7
+Hello from 2/4 
+Received value: 7
+
+
+int MPI_Bcast( void *buffer, int count, MPI_Datatype datatype, int root, 
+               MPI_Comm comm )
+!!! E DE AJUNS O SINGURA COMANDA ATAT PT SEND CAT SI PT RECEIVE.
+
+----5--------------------------------------------
+
+2 Received array: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 
+3 Received array: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 
+0 Received array: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 
+MPI_Bcast(a, 100, MPI_INT, 1, MPI_COMM_WORLD);
+
+----6--------------------------------------------
+
+int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+ void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
+int MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+ void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
+
+45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 
+75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102
+ 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 
+ 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144
+
+----7--------------------------------------------
+
+Process 1 received 1 from process 0
+Process 2 received 3 from process 1
+Process 3 received 5 from process 2
+Process 0 received 7 from process 3
+
+----8--------------------------------------------
+
+MPI_Status status;
+MPI_Recv(&data, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+ MPI_STATUS_IGNORE);
+printf("Received %d with status: %d\n", data, status.MPI_SOURCE);
+
+Received 2 with status: 0
+Received 1 with status: 0
+Received 3 with status: 0
+
+----9--------------------------------------------
+printf("Received %d from process %d with tag %d\n", trim, status.MPI_SOURCE, status.MPI_TAG);
+
+Received 0 from process 0 with tag 1
+Received 1 from process 0 with tag 2
+Received 2 from process 0 with tag 3
+
+----10-------------------------------------------
+
+66
+Introduceti un numar: Mai mare
+88
+Introduceti un numar: Mai mic
+75
+Introduceti un numar: Mai mare
+77
+Introduceti un numar: Mai mare
+80
+Introduceti un numar: Mai mare
+84
+Introduceti un numar: Corect
+
+----11-------------------------------------------
+A fost testat numarul: 50
+Mai mic
+A fost testat numarul: 25
+Mai mare
+A fost testat numarul: 37
+Mai mic
+A fost testat numarul: 19
+Mai mare
+A fost testat numarul: 28
+Mai mare
+A fost testat numarul: 42
+Mai mic
+A fost testat numarul: 21
+Mai mare
+A fost testat numarul: 31
+Corect
+
+am folosit cautare binara pentru O:logN
