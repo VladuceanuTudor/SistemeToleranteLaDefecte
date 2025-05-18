@@ -1,5 +1,5 @@
 ,vectorPower,rankSort,monteCarloPI,matrixMultiply
-1,,,,
-2,,,,
-4,,,,
+1,0m1.864s, 0m24.473s,0m0.565s,0m3.007s
+2,0m1.119s,0m13.626s,0m0.397s,0m1.850s
+4,0m0.733s,0m7.644s,0m0.389s,0m1.371s
 ^^^NR PROCESE,,,,

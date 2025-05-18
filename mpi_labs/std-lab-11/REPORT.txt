@@ -1,0 +1,118 @@
+--------------1--------------------------------
+mpicc -o 1_vectorPower 1_vectorPower.c -lm (pt log10 din libm)
+--------------
+time mpirun -n 2 ./1_vectorPower 1000000 0
+
+real    0m1.119s
+user    0m1.451s
+sys     0m0.099s
+--------------
+time mpirun -n 4 ./1_vectorPower 1000000 0
+
+real    0m0.733s
+user    0m1.520s
+sys     0m0.103s
+--------------
+time mpirun -n 6 ./1_vectorPower 1000000 0
+
+real    0m0.621s
+user    0m1.589s
+sys     0m0.107s
+--------------
+time mpirun -n 8 ./1_vectorPower 1000000 0
+
+real    0m0.573s
+user    0m1.745s
+sys     0m0.131s
+--------------
+time mpirun --oversubscribe -n 16 ./1_vectorPower 1000000 0
+
+real    0m0.593s
+user    0m1.851s
+sys     0m0.770s
+--------------
+--------------2--------------------------------------------------------------------------------------
+pt ca am facut cu scatter si gather trebuie ca N sa fie divizibil cu nr de procese!!!
+
+
+time mpirun -n 2 ./3_rankSort 100000 0
+real    0m13.626s
+user    0m25.021s
+sys     0m0.064s
+time mpirun -n 1 ./3_rankSort 100000 0
+real    0m24.473s
+user    0m24.253s
+sys     0m0.054s
+time mpirun -n 4 ./3_rankSort 100000 0
+real    0m7.644s
+user    0m26.961s
+sys     0m0.106s
+
+Cum functioneaza Rank Sort
+
+Generarea vectorului (r0): se aloca v[N] cu valori 0…N–1, apoi se shuffle-uiesc aleator 5·N iteratii.
+Copie de referinta: se copiaza v in vQSort si se apeleaza qsort() pentru validare.
+Broadcast: root-ul trimite v catre toate procesele prin MPI_Bcast.
+Scatter: fiecare proces primeste localVals[localN] din v.
+Calcul rank local: pentru fiecare element local val, se parcurge v in intregime. Se incrementeaza r cand v[j] < val sau cand sunt egale si indexul global j e mai mic decat global_index.
+Gather: fiecare proces trimite localRanks catre root in allRanks[N].
+Reconstructie sortat (r0): out[ allRanks[i] ] = v[i] pentru toate i. Rezulta vectorul sortat.
+
+--------------3--------------------------------------------------------------------------------------
+
+mpicc -o 5_monteCarloPi 5_monteCarloPi.c -lm
+time mpirun -n 1 ./5_monteCarloPi 10000000 1
+time mpirun -n 2 ./5_monteCarloPi 10000000 1
+time mpirun -n 4 ./5_monteCarloPi 10000000 1
+Estimated π = 3.141734 (using 10000000 tosses, 1 processes)
+
+real    0m0.565s
+user    0m0.196s
+sys     0m0.035s
+Estimated π = 3.141740 (using 10000000 tosses, 2 processes)
+
+real    0m0.397s
+user    0m0.157s
+sys     0m0.082s
+Estimated π = 3.141874 (using 10000000 tosses, 4 processes)
+
+real    0m0.389s
+user    0m0.199s
+sys     0m0.102s
+
+Se genereaza aleator N puncte in interiorul unui patrat de latura 2, cu un cerc de raza 1 inscris in el (centrat in (0,0)). Se numara cate puncte cad in cerc:
+
+* daca un punct (x, y) respecta: `x^2 + y^2 <= 1`, atunci e in cerc
+* daca p e numarul de puncte in cerc, atunci:
+
+
+pi = 4 * p/N
+
+
+Explicatie rapida: aria cercului e π, aria patratului e 4, deci raportul dintre ele e π/4 → de aici deducem π.
+
+----------4------------------------------------------------------------------------
+
+time mpirun -n 1 ./7_matrixMultiply 1000 printLevel
+
+real    0m3.007s
+user    0m2.558s
+sys     0m0.064s
+time mpirun -n 2 ./7_matrixMultiply 1000 printLevel
+
+real    0m1.850s
+user    0m2.831s
+sys     0m0.054s
+time mpirun -n 4 ./7_matrixMultiply 1000 printLevel
+
+real    0m1.371s
+user    0m3.601s
+sys     0m0.136s
+
+Am vrut sa fac inmultirea matricelor cu MPI, impartind munca intre procese. 
+Matricea a se imparte pe randuri cu MPI_Scatter, ca fiecare proces sa ia o bucata.
+Matricea b o trimit la toate procesele cu MPI_Bcast, pentru ca e nevoie de ea 
+intreaga. Fiecare proces calculeaza o parte din c, apoi adun rezultatele cu MPI_Gather
+pe procesul root. Am folosit tablouri 1D ca sa fie mai usor cu MPI. 
+Root face initializarea si afisarea, iar restul doar calculeaza. 
+Am presupus ca N e divizibil cu numarul de procese ca sa fie simplu.
