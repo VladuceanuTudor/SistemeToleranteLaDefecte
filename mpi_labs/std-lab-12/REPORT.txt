@@ -1,0 +1,320 @@
+---------------1---------------------------------------------
+mpicc -o 1_nonBlocking 1_nonBlocking.c 
+mpirun ./1_nonBlocking
+Procesul 0 a inițiat trimiterea vectorului.
+Procesul 0 a finalizat trimiterea vectorului.
+Procesul 1 a inițiat primirea vectorului.
+Procesul 1 a finalizat primirea vectorului.
+Vector primit de procesul 1: 0 1 2 3 4 
+
+mpicc -o 1_nonBlocking 1_nonBlocking.c 
+mpirun ./1_nonBlocking
+Procesul 0 a inițiat trimiterea vectorului.
+Procesul 1 a inițiat primirea vectorului.
+Procesul 1 a finalizat primirea vectorului.
+Vector primit de procesul 1: 0 1 2 3 4 5 6 7 8 9 100
+Procesul 0 a finalizat trimiterea vectorului.
+
+-pentru primul modificarea nu apuca sa fie facuta.
+-pentru al doi-lea modificarea este facuta si datele sunt receptionate modificat.
+
+----2--------------------------------------------------------------------------
+MPI_Request request;
+int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
+ int tag, MPI_Comm comm, MPI_Request *request)
+
+int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
+ int tag, MPI_Comm comm, MPI_Request *request)
+
+int MPI_Wait(MPI_Request *request, MPI_Status *status)
+
+Procesul 0: Inițiez trimiterea vectorului mic.
+Procesul 0: Am finalizat trimiterea vectorului mic. Timp: 0.000045 secunde.
+Procesul 1: Inițiez primirea vectorului mic.
+Procesul 1: Am primit vectorul mic: 0 1 2 3 4 
+Procesul 1: Inițiez primirea vectorului mare.
+Procesul 0: Inițiez trimiterea vectorului mare.
+Procesul 0: Am finalizat trimiterea vectorului mare. Timp: 0.002211 secunde.
+Procesul 1: Am primit vectorul mare.
+
+-- daca folosim MPI_Wait() putem bloca si functiile Isend si Irecv
+
+----3---------------------------------------------------------------------------
+
+int MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
+
+S-a intamplat exact ce era de asteptat: mpirun -np 2 ./3_timer 2
+mpirun -np 2 ./3_timer 4
+mpirun -np 2 ./3_timer 6
+Verificat la 1 secunde, mesajul nu a fost încă primit.
+Verificat la 2 secunde, mesajul nu a fost încă primit.
+Mesaj primit după 3 secunde: 42
+Verificat la 1 secunde, mesajul nu a fost încă primit.
+Verificat la 2 secunde, mesajul nu a fost încă primit.
+Verificat la 3 secunde, mesajul nu a fost încă primit.
+Mesaj primit după 4 secunde: 42
+Verificat la 1 secunde, mesajul nu a fost încă primit.
+Verificat la 2 secunde, mesajul nu a fost încă primit.
+Verificat la 3 secunde, mesajul nu a fost încă primit.
+Verificat la 4 secunde, mesajul nu a fost încă primit.
+Verificat la 5 secunde, mesajul nu a fost încă primit.
+Mesajul nu a fost primit în 5 secunde.
+
+----4---------------------------------------------------------------------------
+int MPI_Testany(int count, MPI_Request *array_of_requests, int *index,
+ int *flag, MPI_Status *status)
+
+int MPI_Cancel(MPI_Request *request)
+
+Practic e un haos:
+
+Proces 4: Inițiez primirea de la vecinul 3
+Proces 0: Inițiez trimiterea mesajului către 1
+Proces 0: Trimitere finalizată către 1
+Proces 0: Inițiez primirea de la vecinul 1
+Proces 3: Inițiez primirea de la vecinul 2
+Proces 3: Inițiez primirea de la vecinul 4
+Proces 1: Inițiez primirea de la vecinul 0
+Proces 1: Inițiez primirea de la vecinul 2
+Proces 2: Inițiez primirea de la vecinul 1
+Proces 2: Inițiez primirea de la vecinul 3
+Proces 1 a primit mesaj de la 0, așteaptă 4 secunde
+Proces 4: Niciun mesaj primit în 5 secunde
+Proces 3: Niciun mesaj primit în 5 secunde
+Proces 2: Niciun mesaj primit în 5 secunde
+Proces 0: Niciun mesaj primit în 5 secunde
+Proces 1: Inițiez trimiterea mesajului către 0
+Proces 1: Inițiez trimiterea mesajului către 2
+Proces 1: Trimitere finalizată către 0
+Proces 1: Trimitere finalizată către 2
+Proces 1: Inițiez primirea de la vecinul 0
+Proces 2 a primit mesaj de la 1, așteaptă 2 secunde
+Proces 0 a primit mesaj de la 1, așteaptă 2 secunde
+Proces 0: Inițiez trimiterea mesajului către 1
+Proces 0: Trimitere finalizată către 1
+Proces 0: Inițiez primirea de la vecinul 1
+Proces 2: Inițiez trimiterea mesajului către 1
+Proces 2: Inițiez trimiterea mesajului către 3
+Proces 2: Trimitere finalizată către 1
+Proces 2: Trimitere finalizată către 3
+Proces 2: Inițiez primirea de la vecinul 1
+Proces 4: Niciun mesaj primit în 5 secunde
+Proces 3: Niciun mesaj primit în 5 secunde
+Proces 1 a primit mesaj de la 0, așteaptă 3 secunde
+Proces 3 a primit mesaj de la 2, așteaptă 1 secunde
+Proces 3: Inițiez trimiterea mesajului către 2
+Proces 3: Inițiez trimiterea mesajului către 4
+Proces 3: Trimitere finalizată către 2
+Proces 3: Trimitere finalizată către 4
+Proces 3: Inițiez primirea de la vecinul 2
+Proces 1: Inițiez trimiterea mesajului către 0
+Proces 1: Inițiez trimiterea mesajului către 2
+Proces 1: Trimitere finalizată către 0
+Proces 1: Trimitere finalizată către 2
+Proces 1: Inițiez primirea de la vecinul 0
+Proces 0: Niciun mesaj primit în 5 secunde
+Proces 2 a primit mesaj de la 3, așteaptă 5 secunde
+Proces 4 a primit mesaj de la 3, așteaptă 0 secunde
+Proces 4: Inițiez trimiterea mesajului către 3
+Proces 4: Trimitere finalizată către 3
+Proces 4: Inițiez primirea de la vecinul 3
+Proces 1 a primit mesaj de la 2, așteaptă 3 secunde
+Proces 0 a primit mesaj de la 1, așteaptă 0 secunde
+Proces 0: Inițiez trimiterea mesajului către 1
+Proces 0: Trimitere finalizată către 1
+Proces 0: Inițiez primirea de la vecinul 1
+Proces 3 a primit mesaj de la 4, așteaptă 0 secunde
+Proces 3: Inițiez trimiterea mesajului către 2
+Proces 3: Inițiez trimiterea mesajului către 4
+Proces 3: Trimitere finalizată către 2
+Proces 3: Trimitere finalizată către 4
+Proces 3: Inițiez primirea de la vecinul 4
+Proces 1: Inițiez trimiterea mesajului către 0
+Proces 1: Inițiez trimiterea mesajului către 2
+Proces 1: Trimitere finalizată către 0
+Proces 1: Trimitere finalizată către 2
+Proces 1: Inițiez primirea de la vecinul 2
+Proces 4 a primit mesaj de la 3, așteaptă 0 secunde
+Proces 4: Inițiez trimiterea mesajului către 3
+Proces 4: Trimitere finalizată către 3
+Proces 4: Inițiez primirea de la vecinul 3
+Proces 2: Inițiez trimiterea mesajului către 1
+Proces 2: Inițiez trimiterea mesajului către 3
+Proces 2: Trimitere finalizată către 1
+Proces 2: Trimitere finalizată către 3
+Proces 2: Inițiez primirea de la vecinul 3
+Proces 0 a primit mesaj de la 1, așteaptă 5 secunde
+Proces 3 a primit mesaj de la 4, așteaptă 3 secunde
+Proces 1 a primit mesaj de la 0, așteaptă 1 secunde
+Proces 2 a primit mesaj de la 1, așteaptă 5 secunde
+Proces 1: Inițiez trimiterea mesajului către 0
+Proces 1: Inițiez trimiterea mesajului către 2
+Proces 1: Trimitere finalizată către 0
+Proces 1: Trimitere finalizată către 2
+Proces 1: Inițiez primirea de la vecinul 0
+Proces 3: Inițiez trimiterea mesajului către 2
+Proces 3: Inițiez trimiterea mesajului către 4
+Proces 3: Trimitere finalizată către 2
+Proces 3: Trimitere finalizată către 4
+Proces 3: Inițiez primirea de la vecinul 4
+Proces 1 a primit mesaj de la 2, așteaptă 3 secunde
+Proces 4: Niciun mesaj primit în 5 secunde
+Proces 0: Inițiez trimiterea mesajului către 1
+Proces 0: Trimitere finalizată către 1
+Proces 0: Inițiez primirea de la vecinul 1
+Proces 4 a primit mesaj de la 3, așteaptă 4 secunde
+Proces 3 a primit mesaj de la 2, așteaptă 2 secunde
+Proces 1: Inițiez trimiterea mesajului către 0
+Proces 1: Inițiez trimiterea mesajului către 2
+Proces 1: Trimitere finalizată către 0
+Proces 1: Trimitere finalizată către 2
+Proces 1: Inițiez primirea de la vecinul 2
+Proces 2: Inițiez trimiterea mesajului către 1
+Proces 2: Inițiez trimiterea mesajului către 3
+Proces 2: Trimitere finalizată către 1
+Proces 2: Trimitere finalizată către 3
+Proces 2: Inițiez primirea de la vecinul 1
+Proces 3: Inițiez trimiterea mesajului către 2
+Proces 3: Inițiez trimiterea mesajului către 4
+Proces 3: Trimitere finalizată către 2
+Proces 3: Trimitere finalizată către 4
+Proces 3: Inițiez primirea de la vecinul 2
+Proces 0 a primit mesaj de la 1, așteaptă 3 secunde
+Proces 2 a primit mesaj de la 1, așteaptă 1 secunde
+Proces 2: Inițiez trimiterea mesajului către 1
+Proces 2: Inițiez trimiterea mesajului către 3
+Proces 2: Trimitere finalizată către 1
+Proces 2: Trimitere finalizată către 3
+Proces 2: Inițiez primirea de la vecinul 1
+Proces 4: Inițiez trimiterea mesajului către 3
+Proces 4: Trimitere finalizată către 3
+Proces 4: Inițiez primirea de la vecinul 3
+Proces 3 a primit mesaj de la 2, așteaptă 5 secunde
+Proces 2 a primit mesaj de la 3, așteaptă 0 secunde
+Proces 2: Inițiez trimiterea mesajului către 1
+Proces 2: Inițiez trimiterea mesajului către 3
+Proces 2: Trimitere finalizată către 1
+Proces 2: Trimitere finalizată către 3
+Proces 2: Inițiez primirea de la vecinul 3
+Proces 0: Inițiez trimiterea mesajului către 1
+Proces 0: Trimitere finalizată către 1
+Proces 0: Inițiez primirea de la vecinul 1
+Proces 4 a primit mesaj de la 3, așteaptă 2 secunde
+Proces 0 a primit mesaj de la 1, așteaptă 0 secunde
+Proces 0: Inițiez trimiterea mesajului către 1
+Proces 0: Trimitere finalizată către 1
+Proces 0: Inițiez primirea de la vecinul 1
+Proces 4: Inițiez trimiterea mesajului către 3
+Proces 4: Trimitere finalizată către 3
+Proces 4: Inițiez primirea de la vecinul 3
+Proces 3: Inițiez trimiterea mesajului către 2
+Proces 3: Inițiez trimiterea mesajului către 4
+Proces 3: Trimitere finalizată către 2
+Proces 3: Trimitere finalizată către 4
+Proces 3: Inițiez primirea de la vecinul 2
+Proces 4 a primit mesaj de la 3, așteaptă 3 secunde
+Proces 4: Inițiez trimiterea mesajului către 3
+Proces 4: Trimitere finalizată către 3
+Proces 4: Inițiez primirea de la vecinul 3
+
+
+---------5-----------------------------------------------------------------------
+mpirun --oversubscribe -np 5 ./5_spanningTreee 2
+Rank  1 neighbors:   0,  2,  3
+Rank  2 neighbors:   1
+Rank 2: I am the initiator, sending initial message to neighbors.
+Rank 2: Sending initial message to neighbor 1.
+Rank  3 neighbors:   1,  4
+Rank  4 neighbors:   3
+Rank 1: Received message from 2 (hop count 1).
+Rank 1: Set parent to 2.
+Rank  0 neighbors:   1
+Rank 1: Forwarding message to neighbor 0.
+Rank 1: Forwarding message to neighbor 3.
+Rank 0: Received message from 1 (hop count 2).
+Rank 0: Set parent to 1.
+Rank 3: Received message from 1 (hop count 3).
+Rank 3: Set parent to 1.
+Rank 3: Forwarding message to neighbor 4.
+Rank 4: Received message from 3 (hop count 4).
+Rank 4: Set parent to 3.
+Rank 2: Collecting complete parent list.
+Complete parent list for all processes:
+Rank 2: Parent of process 0 is 1.
+Rank 2: Parent of process 1 is 2.
+Rank 2: Parent of process 2 is 2.
+Rank 2: Parent of process 3 is 1.
+Rank 2: Parent of process 4 is 3.
+
+
+----------------------------------------------------------
+
+mpirun --oversubscribe -np 12 ./5_spanningTreee 3
+Rank  9 neighbors:  10,  8,  5,  7
+Rank 11 neighbors:   5,  4
+Rank  1 neighbors:   2,  0
+Rank  2 neighbors:   3,  1,  0
+Rank  3 neighbors:   4,  2,  5
+Rank 3: I am the initiator, sending initial message to neighbors.
+Rank 3: Sending initial message to neighbor 4.
+Rank  7 neighbors:   8,  6,  9
+Rank  6 neighbors:   7,  5
+Rank 10 neighbors:   9
+Rank  0 neighbors:   1,  2
+Rank  4 neighbors:  11,  3
+Rank 4: Received message from 3 (hop count 1).
+Rank 4: Set parent to 3.
+Rank  5 neighbors:   6, 11,  9,  3
+Rank 3: Sending initial message to neighbor 2.
+Rank 3: Sending initial message to neighbor 5.
+Rank  8 neighbors:   9,  7
+Rank 2: Received message from 3 (hop count 1).
+Rank 2: Set parent to 3.
+Rank 5: Received message from 3 (hop count 1).
+Rank 5: Set parent to 3.
+Rank 4: Forwarding message to neighbor 11.
+Rank 2: Forwarding message to neighbor 1.
+Rank 5: Forwarding message to neighbor 6.
+Rank 11: Received message from 4 (hop count 2).
+Rank 11: Set parent to 4.
+Rank 2: Forwarding message to neighbor 0.
+Rank 5: Forwarding message to neighbor 11.
+Rank 6: Received message from 5 (hop count 2).
+Rank 6: Set parent to 5.
+Rank 5: Forwarding message to neighbor 9.
+Rank 0: Received message from 2 (hop count 3).
+Rank 0: Set parent to 2.
+Rank 11: Forwarding message to neighbor 5.
+Rank 6: Forwarding message to neighbor 7.
+Rank 9: Received message from 5 (hop count 4).
+Rank 9: Set parent to 5.
+Rank 1: Received message from 2 (hop count 2).
+Rank 1: Set parent to 2.
+Rank 7: Received message from 6 (hop count 3).
+Rank 7: Set parent to 6.
+Rank 7: Forwarding message to neighbor 8.
+Rank 0: Forwarding message to neighbor 1.
+Rank 7: Forwarding message to neighbor 9.
+Rank 8: Received message from 7 (hop count 4).
+Rank 8: Set parent to 7.
+Rank 9: Forwarding message to neighbor 10.
+Rank 1: Forwarding message to neighbor 0.
+Rank 9: Forwarding message to neighbor 8.
+Rank 9: Forwarding message to neighbor 7.
+Rank 8: Forwarding message to neighbor 9.
+Rank 10: Received message from 9 (hop count 5).
+Rank 10: Set parent to 9.
+Rank 3: Collecting complete parent list.
+Complete parent list for all processes:
+Rank 3: Parent of process 0 is 2.
+Rank 3: Parent of process 1 is 2.
+Rank 3: Parent of process 2 is 3.
+Rank 3: Parent of process 3 is 3.
+Rank 3: Parent of process 4 is 3.
+Rank 3: Parent of process 5 is 3.
+Rank 3: Parent of process 6 is 5.
+Rank 3: Parent of process 7 is 6.
+Rank 3: Parent of process 8 is 7.
+Rank 3: Parent of process 9 is 5.
+Rank 3: Parent of process 10 is 9.
+Rank 3: Parent of process 11 is 4.
