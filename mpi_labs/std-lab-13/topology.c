@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 // clang-format off
 /*
@@ -109,6 +110,24 @@ int mergeTopologies(int *topologyA, int *topologyB)
 {
 	int changed = 0;
 	// TODO topology A will be the result of merging topologyA and topologyB
+	int sizeA = topologyA[0];
+	int sizeB = topologyB[0];
+	for (int i = 1; i < sizeB; i++) {
+		int nodeA = topologyB[2 * i];
+		int nodeB = topologyB[2 * i + 1];
+		if (!isInTopology(topologyA, nodeA, nodeB)) {
+            if (2 * sizeA + 1 >= 100) { 
+                fprintf(stderr, "Rank %d: Topology array overflow\n", MPI_Comm_rank(MPI_COMM_WORLD, &(int){0}));
+                MPI_Abort(MPI_COMM_WORLD, 1);
+            }
+            topologyA[2 * sizeA] = nodeA;     
+            topologyA[2 * sizeA + 1] = nodeB;
+            sizeA++;                          
+            changed = 1;
+        }
+	}
+	topologyA[0] = sizeA ;
+	topologyB[0] = sizeB;
 
 	return changed;
 }
@@ -137,30 +156,59 @@ void printNextHops(int *v, int rank, int N)
 
 int *calculateNextHops(int *topology, int startNode, int numNodes)
 {
-	int *nextHops = malloc(sizeof(int) * numNodes);
-	int *parents = malloc(sizeof(int) * numNodes);
-	int *queue = malloc(sizeof(int) * numNodes);
-	for (int i = 0; i < numNodes; i++) {
-		queue[i] = -1;
-		nextHops[i] = -1;
-		parents[i] = -1;
-	}
-	int queueLeft = 0;
-	int queueRight = 1;
-	queue[0] = startNode;
-	parents[startNode] = startNode;
+    int *nextHops = malloc(sizeof(int) * numNodes);
+    int *parents = malloc(sizeof(int) * numNodes);
+    int *queue = malloc(sizeof(int) * numNodes);
+    int *visited = malloc(sizeof(int) * numNodes);
 
-	// TODO implement BFS/Dijsktra. You will have to use a queue.
-	// (queueLeft, queueRight should be used to manipulate the queue)
-	// at the end the vector parents should be filled
+    for (int i = 0; i < numNodes; i++) {
+        queue[i] = -1;
+        nextHops[i] = -1;
+        parents[i] = -1;
+        visited[i] = 0;
+    }
+
+    
+    int queueLeft = 0;
+    int queueRight = 1;
+    queue[0] = startNode;
+    parents[startNode] = startNode;
+    visited[startNode] = 1;
+    nextHops[startNode] = startNode; 
 
 
+    while (queueLeft < queueRight) {
+        int current = queue[queueLeft++];
 
+        for (int i = 1; i < topology[0]; i++) {
+            int nodeA = topology[2 * i];
+            int nodeB = topology[2 * i + 1];
+            int neighbor = (nodeA == current) ? nodeB : (nodeB == current) ? nodeA : -1;
+            if (neighbor != -1 && !visited[neighbor]) {
+                visited[neighbor] = 1;
+                parents[neighbor] = current;
+                queue[queueRight++] = neighbor;
+            }
+        }
+    }
 
-	// TODO for each node, go up the parent tree (vector in our case)
-	// the last node before startNode is the nextHop node (write this value in nextHops)
+    
+    for (int i = 0; i < numNodes; i++) {
+        if (i == startNode || parents[i] == -1) {
+            nextHops[i] = i;
+            continue;
+        }
+        int current = i;
+        while (parents[current] != startNode && parents[current] != current) {
+            current = parents[current];
+        }
+        nextHops[i] = current;
+    }
 
-	return nextHops;
+    free(parents);
+    free(queue);
+    free(visited);
+    return nextHops;
 }
 
 int main(int argc, char *argv[])
@@ -191,12 +239,49 @@ int main(int argc, char *argv[])
 	//     if topology changed send to all neighbors (except the one
 	//     if more than 5 seconds passed without any receive, break;
 
+	for (int i = 1; i < neigh[0]; i++) 
+	{
+		int dest = neigh[i];
+        MPI_Send(localTopology, 100, MPI_INT, dest, rank, MPI_COMM_WORLD);
+    }
+
+	int last_receive_time = time(NULL);
+    while(1){
+        MPI_Status status;
+        int flag = 0;
+        MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+        if (flag) {
+            int source = status.MPI_SOURCE;
+            int tag = status.MPI_TAG;
+            MPI_Recv(neighborTopology, 100, MPI_INT, source, tag, MPI_COMM_WORLD, &status);
+            int changed = mergeTopologies(localTopology, neighborTopology);
+            last_receive_time = time(NULL); // reset timer on receive
+            if (changed) {
+                for (int i = 1; i < neigh[0]; i++) {
+                    int dest = neigh[i];
+                    if (dest == source) {
+                        continue;
+                    }
+                    MPI_Send(localTopology, 100, MPI_INT, dest, rank, MPI_COMM_WORLD);
+                }
+            }
+        }
+        
+		//maresc timpul pentru ca mesajele sa ajunga si sa aiba fiecare nod aprox toata topologia.
+        if (time(NULL) - last_receive_time > 5) 
+            break;
+        
+        sleep(0.07);
+    }
+
+
+
 	printTopology(localTopology, rank);
 
 	MPI_Barrier(MPI_COMM_WORLD);  // this is just for pretty print
 
 	// TODO implement the calculateNextHops() function
-	int *nextHops = calculateNextHops(localTopology, rank);
+	int *nextHops = calculateNextHops(localTopology, rank, nProcesses);
 	printNextHops(nextHops, rank, nProcesses);
 
 	MPI_Barrier(MPI_COMM_WORLD);  // this is just for pretty print
@@ -205,6 +290,50 @@ int main(int argc, char *argv[])
 	// initiatiors send the message
 	// all nodes received message with timer (5 seconds)
 	// if message received, look at first element, if destiantion, print else send to nextHop
+
+	if(rank==0){
+		char message[100];
+		int dest = 10;
+		snprintf(message, sizeof(message), "%d:Hello from rank %d", dest, rank);
+		int nextHop = nextHops[dest];
+		MPI_Send(message, 100, MPI_CHAR, nextHop, rank, MPI_COMM_WORLD);
+		
+	}else{
+		int startTime = time(NULL);
+		char message[100];
+		while(1){
+			MPI_Status status;
+        	int flag = 0;
+        	MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+        	if (flag) {
+					int source = status.MPI_SOURCE;
+					int tag = status.MPI_TAG;
+					
+					MPI_Recv(message, 100, MPI_CHAR, source, tag, MPI_COMM_WORLD, &status);
+					
+					int dest;
+            		sscanf(message, "%d:", &dest);
+					
+					if(dest == rank){
+						printf("Rank %d finally received message: %s\n", rank, message);
+						break;
+					}
+					else
+						printf("Rank %d received message: %s\n", rank, message);
+
+					int nextHop = nextHops[dest];
+					MPI_Send(message, 100, MPI_CHAR, nextHop, rank, MPI_COMM_WORLD);
+					break;
+			}
+			if(time(NULL) - startTime > 5){
+				printf("Rank %d: No message received in 5 seconds\n", rank);
+				break;
+			}
+			sleep(0.1);
+		}
+		
+		
+	}
 
 	MPI_Finalize();
 	return 0;
